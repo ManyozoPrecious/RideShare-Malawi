@@ -211,6 +211,14 @@ class InMemoryRideRepository : RideRepository {
         }
     }
 
+    override fun updatePaymentStatus(requestId: String, status: PaymentStatus): Result<Unit> {
+        val request = _requests.value.find { it.id == requestId }
+            ?: return Result.failure(IllegalStateException("Booking request not found."))
+        val updatedReq = request.copy(paymentStatus = status)
+        _requests.value = _requests.value.map { if (it.id == requestId) updatedReq else it }
+        return Result.success(Unit)
+    }
+
     companion object {
         fun normalizePhone(phone: String): String {
             var digits = phone.filter { it.isDigit() }

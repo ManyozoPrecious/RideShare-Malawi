@@ -4,12 +4,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.rideshare.malawi.v2.data.AppGraph
+import com.rideshare.malawi.v2.data.PaymentStatus
 import com.rideshare.malawi.v2.data.Ride
 import com.rideshare.malawi.v2.data.RideRepository
 import com.rideshare.malawi.v2.data.RideRequest
 import com.rideshare.malawi.v2.data.User
+import com.rideshare.malawi.v2.data.paychangu.CloudPayChanguService
+import com.rideshare.malawi.v2.data.paychangu.MobileMoneyOperator
+import com.rideshare.malawi.v2.data.paychangu.PayChanguChargeRequest
+import com.rideshare.malawi.v2.data.paychangu.PayChanguService
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class RidesViewModel(
     private val repo: RideRepository
@@ -81,5 +88,53 @@ class RidesViewModel(
                 error = throwable.message
             }
         )
+    }
+
+    private val payChanguService = PayChanguService()
+    private val cloudPayChanguService = CloudPayChanguService()
+
+    fun processPayChanguPayment(
+        requestId: String,
+        operator: MobileMoneyOperator,
+        phone: String,
+        amount: Int,
+        userEmail: String = "passenger@rideshare.mw",
+        userName: String = "Passenger",
+        onResult: (Result<String>) -> Unit = {}
+    ) {
+        repo.updatePaymentStatus(requestId, PaymentStatus.PROCESSING)
+        viewModelScope.launch {
+            val cloudRes = cloudPayChanguService.createMobileMoneyPayment(requestId, phone, operator)
+            if (cloudRes.isSuccess) {
+                repo.updatePaymentStatus(requestId, PaymentStatus.SUCCESS)
+                val msg = "PayChangu Cloud Payment prompt sent to $phone (${operator.displayName})"
+                notice = msg
+                onResult(Result.success(msg))
+            } else {
+                val txRef = "tx-${System.currentTimeMillis()}-$requestId"
+                val req = PayChanguChargeRequest(
+                    amount = amount,
+                    currency = "MWK",
+                    operator = operator,
+                    phoneNumber = phone,
+                    email = userEmail,
+                    txRef = txRef,
+                    firstName = userName
+                )
+                val res = payChanguService.chargeMobileMoney(req)
+                res.fold(
+                    onSuccess = { response ->
+                        repo.updatePaymentStatus(requestId, PaymentStatus.SUCCESS)
+                        notice = response.message
+                        onResult(Result.success(response.message))
+                    },
+                    onFailure = { throwable ->
+                        repo.updatePaymentStatus(requestId, PaymentStatus.FAILED)
+                        error = throwable.message ?: "PayChangu payment failed"
+                        onResult(Result.failure(throwable))
+                    }
+                )
+            }
+        }
     }
 }

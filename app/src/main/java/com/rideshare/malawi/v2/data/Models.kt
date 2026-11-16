@@ -12,6 +12,10 @@ enum class RequestStatus {
     PENDING, ACCEPTED, REJECTED
 }
 
+enum class PaymentStatus {
+    UNPAID, PROCESSING, SUCCESS, FAILED
+}
+
 data class User(
     val id: String,
     val name: String,
@@ -41,5 +45,6 @@ data class RideRequest(
     val rideId: String,
     val passengerId: String,
     val status: RequestStatus,
-    val createdAt: Long
+    val createdAt: Long,
+    val paymentStatus: PaymentStatus = PaymentStatus.UNPAID
 )

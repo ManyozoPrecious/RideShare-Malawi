@@ -16,4 +16,5 @@ interface RideRepository {
     fun createRide(pickup: String, destination: String, date: String, time: String, seats: Int, pricePerSeat: Int): Result<Ride>
     fun requestSeat(rideId: String): Result<RideRequest>
     fun respondToRequest(requestId: String, accept: Boolean): Result<Unit>
+    fun updatePaymentStatus(requestId: String, status: PaymentStatus): Result<Unit>
 }

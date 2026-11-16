@@ -246,4 +246,21 @@ class InMemoryRideRepositoryTest {
         assertTrue(acc2.isFailure)
         assertEquals("No seats left on this ride.", acc2.exceptionOrNull()?.message)
     }
+
+    @Test
+    fun updatePaymentStatus_updatesStateCorrectly() {
+        repo.login("888000001", "demo123")
+        val req = repo.requestSeat("r1").getOrThrow()
+        assertEquals(PaymentStatus.UNPAID, req.paymentStatus)
+
+        val resProcessing = repo.updatePaymentStatus(req.id, PaymentStatus.PROCESSING)
+        assertTrue(resProcessing.isSuccess)
+        val updatedProcessing = repo.requests.value.find { it.id == req.id }
+        assertEquals(PaymentStatus.PROCESSING, updatedProcessing?.paymentStatus)
+
+        val resSuccess = repo.updatePaymentStatus(req.id, PaymentStatus.SUCCESS)
+        assertTrue(resSuccess.isSuccess)
+        val updatedSuccess = repo.requests.value.find { it.id == req.id }
+        assertEquals(PaymentStatus.SUCCESS, updatedSuccess?.paymentStatus)
+    }
 }

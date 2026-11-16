@@ -27,12 +27,7 @@ class DriverVerificationTests {
         }
     }
 
-    /**
-     * RS_VERIFY_001
-     * Title: Positive Verification Screen Load
-     * Steps: loginAs(), chooseDriver().
-     * Expected: "Pending review" status and verification form visible.
-     */
+
     @Test
     fun RS_VERIFY_001_verificationFormDisplayed() {
         composeRule.loginAs()
@@ -44,12 +39,7 @@ class DriverVerificationTests {
         composeRule.onNodeWithText("Submit for verification").assertIsNotEnabled()
     }
 
-    /**
-     * RS_VERIFY_002
-     * Title: Positive Driver Verification Submission
-     * Steps: loginAs(), chooseDriver(), enter model "Toyota Hiace", reg "BT 4521", tap attach box, tap "Submit for verification".
-     * Expected: status "Verified", text "You're verified and ready to offer rides.", and "Go to driver home" button. Also assert AppState.driverVerification is VERIFIED.
-     */
+
     @Test
     fun RS_VERIFY_002_successfulVerification() {
         composeRule.loginAs()
@@ -64,12 +54,7 @@ class DriverVerificationTests {
         assertEquals(VerificationStatus.VERIFIED, AppState.driverVerification.value)
     }
 
-    /**
-     * RS_VERIFY_003
-     * Title: Negative Verification - Document missing
-     * Steps: loginAs(), chooseDriver(), enter model "Toyota Hiace", reg "BT 4521", document NOT attached.
-     * Expected: "Submit for verification" disabled and status still "Pending review".
-     */
+
     @Test
     fun RS_VERIFY_003_missingDocumentKeepsButtonDisabled() {
         composeRule.loginAs()

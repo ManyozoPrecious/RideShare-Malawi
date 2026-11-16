@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192011683983",
+    "project_id": "ridesharemalawi",
+    "storage_bucket": "ridesharemalawi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192011683983:android:f5131a229c95bd72a4c8fa",
+        "android_client_info": {
+          "package_name": "com.rideshare.malawi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE6p4-igiL6RX-9d_MgAPZH0OwTsCIYpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
