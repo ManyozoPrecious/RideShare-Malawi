@@ -13,8 +13,8 @@ android {
         applicationId = "com.rideshare.malawi"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1-ui-milestone"
+        versionCode = 3
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
