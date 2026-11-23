@@ -3,6 +3,7 @@ package com.rideshare.malawi.v2.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rideshare.malawi.v2.data.AppGraph
@@ -15,6 +16,7 @@ import com.rideshare.malawi.v2.data.paychangu.CloudPayChanguService
 import com.rideshare.malawi.v2.data.paychangu.MobileMoneyOperator
 import com.rideshare.malawi.v2.data.paychangu.PayChanguChargeRequest
 import com.rideshare.malawi.v2.data.paychangu.PayChanguService
+import com.rideshare.malawi.v2.data.worker.PaymentStatusWorker
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -100,12 +102,17 @@ class RidesViewModel(
         amount: Int,
         userEmail: String = "passenger@rideshare.mw",
         userName: String = "Passenger",
+        context: Context? = null,
         onResult: (Result<String>) -> Unit = {}
     ) {
         repo.updatePaymentStatus(requestId, PaymentStatus.PROCESSING)
         viewModelScope.launch {
             val cloudRes = cloudPayChanguService.createMobileMoneyPayment(requestId, phone, operator)
             if (cloudRes.isSuccess) {
+                val chargeId = cloudRes.getOrNull() ?: ""
+                if (context != null && chargeId.isNotBlank()) {
+                    PaymentStatusWorker.schedulePaymentSync(context, chargeId, requestId)
+                }
                 repo.updatePaymentStatus(requestId, PaymentStatus.SUCCESS)
                 val msg = "PayChangu Cloud Payment prompt sent to $phone (${operator.displayName})"
                 notice = msg

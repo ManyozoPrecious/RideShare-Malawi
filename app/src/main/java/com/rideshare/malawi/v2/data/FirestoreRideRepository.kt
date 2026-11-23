@@ -2,15 +2,17 @@ package com.rideshare.malawi.v2.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.rideshare.malawi.v2.data.session.UserSessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class FirestoreRideRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val sessionManager: UserSessionManager? = null
 ) : RideRepository {
 
-    private val _currentUser = MutableStateFlow<User?>(null)
+    private val _currentUser = MutableStateFlow<User?>(sessionManager?.restoreUserSession())
     override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     private val _users = MutableStateFlow<List<User>>(emptyList())
@@ -200,6 +202,7 @@ class FirestoreRideRepository(
         )
         saveUserToFirestore(newUser)
         _currentUser.value = newUser
+        sessionManager?.saveUserSession(newUser)
         return Result.success(newUser)
     }
 
@@ -209,11 +212,13 @@ class FirestoreRideRepository(
             ?: return Result.failure(IllegalStateException("Incorrect phone number or password."))
 
         _currentUser.value = user
+        sessionManager?.saveUserSession(user)
         return Result.success(user)
     }
 
     override fun logout() {
         _currentUser.value = null
+        sessionManager?.clearSession()
     }
 
     override fun submitVerification(vehicleModel: String, vehicleReg: String, documentUri: String?): Result<Unit> {
@@ -240,6 +245,7 @@ class FirestoreRideRepository(
         )
         saveUserToFirestore(updatedUser)
         _currentUser.value = updatedUser
+        sessionManager?.saveUserSession(updatedUser)
         return Result.success(Unit)
     }
 
@@ -253,6 +259,7 @@ class FirestoreRideRepository(
         val updatedUser = user.copy(verification = VerificationStatus.VERIFIED)
         saveUserToFirestore(updatedUser)
         _currentUser.value = updatedUser
+        sessionManager?.saveUserSession(updatedUser)
         return Result.success(Unit)
     }
 

@@ -1,12 +1,15 @@
 package com.rideshare.malawi.v2.data
 
+import com.rideshare.malawi.v2.data.session.UserSessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class InMemoryRideRepository : RideRepository {
+class InMemoryRideRepository(
+    private val sessionManager: UserSessionManager? = null
+) : RideRepository {
 
-    private val _currentUser = MutableStateFlow<User?>(null)
+    private val _currentUser = MutableStateFlow<User?>(sessionManager?.restoreUserSession())
     override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     private val _users = MutableStateFlow(initialUsers())
@@ -42,6 +45,7 @@ class InMemoryRideRepository : RideRepository {
         )
         _users.value = _users.value + newUser
         _currentUser.value = newUser
+        sessionManager?.saveUserSession(newUser)
         return Result.success(newUser)
     }
 
@@ -51,11 +55,13 @@ class InMemoryRideRepository : RideRepository {
             ?: return Result.failure(IllegalStateException("Incorrect phone number or password."))
 
         _currentUser.value = user
+        sessionManager?.saveUserSession(user)
         return Result.success(user)
     }
 
     override fun logout() {
         _currentUser.value = null
+        sessionManager?.clearSession()
     }
 
     override fun submitVerification(vehicleModel: String, vehicleReg: String, documentUri: String?): Result<Unit> {
@@ -81,6 +87,7 @@ class InMemoryRideRepository : RideRepository {
             verification = VerificationStatus.PENDING
         )
         _currentUser.value = updatedUser
+        sessionManager?.saveUserSession(updatedUser)
         _users.value = _users.value.map { if (it.id == user.id) updatedUser else it }
         return Result.success(Unit)
     }
@@ -94,6 +101,7 @@ class InMemoryRideRepository : RideRepository {
 
         val updatedUser = user.copy(verification = VerificationStatus.VERIFIED)
         _currentUser.value = updatedUser
+        sessionManager?.saveUserSession(updatedUser)
         _users.value = _users.value.map { if (it.id == user.id) updatedUser else it }
         return Result.success(Unit)
     }
